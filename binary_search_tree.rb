@@ -14,6 +14,7 @@ class Node
 end
 
 class Tree
+  attr_accessor :root, :array
   def initialize(array)
     @array = array.uniq.sort
     @root = build_tree(@array)
@@ -38,9 +39,34 @@ class Tree
 
     root_node
   end
+
+  def insert(value)
+    #takes that value compares it with root nodes
+    #continues doing so until we get to a leaf node or until a root node has no children nodes
+    new_node = Node.new(value)
+    current_node = @root
+    until current_node.left.nil? || current_node.right.nil?
+      if new_node.data < current_node.data
+        current_node = current_node.left
+      else
+        current_node = current_node.right
+      end
+    end
+    if new_node.data < current_node.data
+      current_node.left = new_node
+    else
+      current_node.right = new_node
+    end
+  end
+
+  def delete(value)
+  end
   
 
 end
 
 my_tree = Tree.new([1,2,3,4,5,6,7,8,9])
 my_tree.pretty_print
+my_tree.insert(10)
+my_tree.pretty_print
+
