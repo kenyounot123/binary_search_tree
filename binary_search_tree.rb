@@ -1,9 +1,7 @@
 class Node
   include Comparable
   attr_accessor :data, :left, :right
-  def <=>(other)
-    self.data <=> other.data
-  end
+
   def initialize(data, left=nil, right=nil)
     @data = data
     @left = left
@@ -59,14 +57,40 @@ class Tree
     end
   end
 
-  def delete(value)
+  def delete(value, current_node=@root) #this assumes the value exists in the tree
+    return current_node if current_node.nil?
+    if value < current_node.data
+      current_node.left = delete(value, current_node.left)
+    elsif value > current_node.data
+      current_node.right = delete(value, current_node.right)
+    else
+      # case 1 delete node with one child or none
+      return current_node.right if current_node.left.nil?
+      return current_node.left if current_node.right.nil?
+      # case 3 delete node with two children 
+      min_right_sub_tree = find_min(current_node.right)
+      current_node.data = min_right_sub_tree.data
+      current_node.right = delete(min_right_sub_tree.data, current_node.right)
+    end
+    current_node
   end
-  
 
+  def find_min(node)
+    until node.left.nil?
+      node = node.left
+    end
+    node
+  end
+
+  
 end
 
 my_tree = Tree.new([1,2,3,4,5,6,7,8,9])
 my_tree.pretty_print
 my_tree.insert(10)
 my_tree.pretty_print
+my_tree.delete(7)
+my_tree.pretty_print
+
+
 
