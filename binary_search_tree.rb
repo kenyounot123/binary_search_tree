@@ -38,23 +38,11 @@ class Tree
     root_node
   end
 
-  def insert(value)
-    #takes that value compares it with root nodes
-    #continues doing so until we get to a leaf node or until a root node has no children nodes
-    new_node = Node.new(value)
-    current_node = @root
-    until current_node.left.nil? || current_node.right.nil?
-      if new_node.data < current_node.data
-        current_node = current_node.left
-      else
-        current_node = current_node.right
-      end
-    end
-    if new_node.data < current_node.data
-      current_node.left = new_node
-    else
-      current_node.right = new_node
-    end
+  def insert(value, node=@root) 
+    return @root = Node.new(value) if @root.nil?
+    return Node.new(value) if node.nil?
+    value < node.data ? node.left = insert(value, node.left) : node.right = insert(value, node.right)
+    node
   end
 
   def delete(value, current_node=@root) #this assumes the value exists in the tree
@@ -95,73 +83,113 @@ class Tree
 
   def level_order(current_node=@root) #traverse the tree in breadth-first level order and yield each node to provided block
     return nil if current_node.nil?
-    queue_values = []
-    queue_values.push(current_node)
-    while !queue_values.empty?
-      return queue_values unless block_given?
-      current_node = queue_values.first
+    queue = []
+    queue.push(current_node)
+    while !queue.empty?
+      return queue unless block_given?
+      current_node = queue.first
       yield(current_node)
-      queue_values.push(current_node.left) unless current_node.left.nil?
-      queue_values.push(current_node.right) unless current_node.right.nil?
-      queue_values.shift
+      queue.push(current_node.left) unless current_node.left.nil?
+      queue.push(current_node.right) unless current_node.right.nil?
+      queue.shift
     end
   end
 
-  def inorder(current_node=@root) #left, root, right
-    array_values = []
+  def inorder(current_node=@root,output=[]) #left, root, right
     return nil if current_node.nil?
-    inorder(current_node.left)
-    return array_values unless block_given?
-    yield(current_node)
-    inorder(current_node.right)
-
+    inorder(current_node.left, output)
+    output.push(block_given? ? yield(current_node) : current_node.data) 
+    inorder(current_node.right, output)
+    output
   end
 
-  def preorder(current_node=@root)   #root, left, right
-    array_values = []
+  def preorder(current_node=@root, output=[])   #root, left, right
     return nil if current_node.nil?
-    return array_values unless block_given?
-    array_values.push(current_node)
-    yield(current_node)
-    preorder(current_node.left)
-    preorder(current_node.right)
-
+    output.push(block_given? ? yield(current_node) : current_node.data) 
+    preorder(current_node.left, output)
+    preorder(current_node.right, output)
+    output
   end
 
-  def postorder(current_node=@root) #left, right, root
-    array_values = []
+  def postorder(current_node=@root, output=[]) #left, right, root
     return nil if current_node.nil?
-    postorder(current_node.left)
-    postorder(current_node.right)
-    return array_values unless block_given?
-    array_values.push(current_node) 
-    yield(current_node)
+    postorder(current_node.left, output)
+    postorder(current_node.right, output)
+    output.push(block_given? ? yield(current_node) : current_node.data) 
+    output
   end
 
-  def height(node) #method which accepts a node and returns its height.
+  def height(node,edges=0) #method which accepts a node and returns its height. Height defined as number of edges from given node to leaf node
+    #find height of left subtree, find height of right subtree,
+    #return the max of this.
+    return 0 if node.nil?
+    return edges if node.left.nil? && node.right.nil?
+    left_subtree = height(node.left, edges + 1)
+    right_subtree = height(node.right, edges + 1)
+    return [left_subtree, right_subtree].max
+  end
+
+  def depth(node, depth=0) #method which accepts a node and returns its depth. Depth defined as number of edges from given node to root node
+    return 0 if node.nil?
     current_node = @root
-    edges = 0
     until current_node.data == node.data
       if node.data < current_node.data
         current_node = current_node.left
+        depth += 1
       elsif node.data > current_node.data
         current_node = current_node.right
-      else
-        
+        depth += 1
+      end
     end
+    depth
+  end
 
+
+  def balanced? #checks if the tree is balanced.  A balanced tree is one where the difference between heights of left subtree and right subtree of every node is not more than 1.
+    self.level_order do |node|
+      left_subtree_height = height(node.left)
+      right_subtree_height = height(node.right)
+      unless (left_subtree_height - right_subtree_height).abs <= 1
+        return false
+      end
+    end
+    return true
+  end
+
+  def rebalance #method which rebalances an unbalanced tree
+    return if self.balanced?
+    array_of_values = self.inorder
+    @root = build_tree(array_of_values)
   end
 
   
 end
 
-my_tree = Tree.new([1,2,3,4,5,6,7,8,9])
-my_tree.pretty_print
-my_tree.insert(10)
-my_tree.pretty_print
-my_tree.delete(7)
-my_tree.pretty_print
-p my_tree.find(3)
+#driver script
+new_tree = Tree.new((Array.new(15) {rand(1..100)}))
+puts "Tree is balanced: #{new_tree.balanced?}"
+puts "Inorder traversal: #{new_tree.inorder}"
+puts "Level-order traversal: #{new_tree.level_order}"
+puts "Post-order traversal: #{new_tree.postorder}"
+puts "Pre-order traversal: #{new_tree.preorder}"
+new_tree.pretty_print
+10.times do
+  add_numbers = rand(100..500)
+  puts "Adding #{add_numbers} to tree..."
+  new_tree.insert(add_numbers)
+end
+new_tree.pretty_print
+puts "Tree is balanced: #{new_tree.balanced?}"
+new_tree.rebalance
+puts "Rebalancing tree..."
+new_tree.pretty_print
+puts "Tree is balanced: #{new_tree.balanced?}"
+puts "Inorder traversal: #{new_tree.inorder}"
+puts "Level-order traversal: #{new_tree.level_order}"
+puts "Post-order traversal: #{new_tree.postorder}"
+puts "Pre-order traversal: #{new_tree.preorder}"
+
+
 
 
 
