@@ -75,11 +75,81 @@ class Tree
     current_node
   end
 
-  def find_min(node)
+  def find(value, current_node=@root) #returns node with the given value
+    return current_node if current_node.nil?
+    if value < current_node.data
+      find(value, current_node.left)
+    elsif value > current_node.data
+      find(value, current_node.right)
+    else
+      return current_node
+    end
+  end
+
+  def find_min(node) #used to delete a node with two childred
     until node.left.nil?
       node = node.left
     end
     node
+  end
+
+  def level_order(current_node=@root) #traverse the tree in breadth-first level order and yield each node to provided block
+    return nil if current_node.nil?
+    queue_values = []
+    queue_values.push(current_node)
+    while !queue_values.empty?
+      return queue_values unless block_given?
+      current_node = queue_values.first
+      yield(current_node)
+      queue_values.push(current_node.left) unless current_node.left.nil?
+      queue_values.push(current_node.right) unless current_node.right.nil?
+      queue_values.shift
+    end
+  end
+
+  def inorder(current_node=@root) #left, root, right
+    array_values = []
+    return nil if current_node.nil?
+    inorder(current_node.left)
+    return array_values unless block_given?
+    yield(current_node)
+    inorder(current_node.right)
+
+  end
+
+  def preorder(current_node=@root)   #root, left, right
+    array_values = []
+    return nil if current_node.nil?
+    return array_values unless block_given?
+    array_values.push(current_node)
+    yield(current_node)
+    preorder(current_node.left)
+    preorder(current_node.right)
+
+  end
+
+  def postorder(current_node=@root) #left, right, root
+    array_values = []
+    return nil if current_node.nil?
+    postorder(current_node.left)
+    postorder(current_node.right)
+    return array_values unless block_given?
+    array_values.push(current_node) 
+    yield(current_node)
+  end
+
+  def height(node) #method which accepts a node and returns its height.
+    current_node = @root
+    edges = 0
+    until current_node.data == node.data
+      if node.data < current_node.data
+        current_node = current_node.left
+      elsif node.data > current_node.data
+        current_node = current_node.right
+      else
+        
+    end
+
   end
 
   
@@ -91,6 +161,8 @@ my_tree.insert(10)
 my_tree.pretty_print
 my_tree.delete(7)
 my_tree.pretty_print
+p my_tree.find(3)
+
 
 
 
